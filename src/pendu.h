@@ -80,31 +80,68 @@ int joueLettre(char *str_mot, char* str_motTemp, char str_lettre);
 int aTrouve(char *str_mot, char* str_motTemp, int int_nbErreur);
 
 /**
-* \fn void ecrireScore(int int_essaisRestants)
+* \fn void score(int int_essaisRestants)
 * \brief permet d'écrire le score dans un fichier texte
-
+*
 * \param int_essaisRestants le nombre d'essais restants
 *
 * \author Justine Ribas <ribasjusti@cy-tech.fr>
 * \version 0.1
 * \date 16 janvier 2022
 */
-void ecrireScore(int int_essaisRestants);
+void score(int int_essaisRestants);
 
 /**
-* \fn int recherchePseudo(char *str_pseudo, int int_score)
-* \brief permet de rechercher un pseudo dans un fichier texte
-
+* \fn int modifierScore(char *str_pseudo, int int_score, char** tab_score)
+* \brief permet de modier les scores
+*
 * \param str_pseudo le pseudo à rechercher
 * \param int_score le score de l'utilisateur
 *
-* \return le score max de l'utilisateur
+* \return le nombre de ligne dans le fichier texte
 *
 * \author Justine Ribas <ribasjusti@cy-tech.fr>
 * \version 0.1
 * \date 16 janvier 2022
 */
-int recherchePseudo(char *str_pseudo, int int_score);
+int modifierScore(char *str_pseudo, int int_score, char** tab_score);
+
+/**
+* \fn char ** lireScores(void)
+* \brief permet de lire et stocker les lignes du fichier scores.txt
+*
+* \return le tableau contenant les lignes du fichier scores.txt
+*
+* \author Justine Ribas <ribasjusti@cy-tech.fr>
+* \version 0.1
+* \date 19 janvier 2022
+*/
+char ** lireScores(void);
+
+/**
+* \fn void ecrireScores(char** tab_scores, int int_nbLigne)
+* \brief permet de d'écrire les scores dans un fichier texte
+*
+* \param tab_scores le tableau contenant les lignes du fichier scores.txt
+* \param int_nbLigne le nombre de ligne dans le fichier scores.txt
+*
+* \author Justine Ribas <ribasjusti@cy-tech.fr>
+* \version 0.1
+* \date 19 janvier 2022
+*/
+void ecrireScores(char** tab_scores, int int_nbLigne);
+
+/**
+* \fn int nbLignesScores(void)
+* \brief permet de lire le nombre de lignes du fichier scores.txt
+*
+* \return le nombre de lignes du fichier scores.txt
+*
+* \author Justine Ribas <ribasjusti@cy-tech.fr>
+* \version 0.1
+* \date 19 janvier 2022
+*/
+int nbLignesScores(void);
 
 /**
 * \fn void affichagePendu(int int_nbErreurs)

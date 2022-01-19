@@ -97,7 +97,7 @@ void jouePendu(char *str_mot)
         affichagePendu(int_nbErreurs);
         printf("\n\nMot : %s\n", str_motTmp);
         // On demande une lettre
-        printf("Nombre de coups : %d\nIl vous reste %d essais\n", int_nbCoups, 11 - int_nbErreurs);
+        printf("Nombre de coups : %d\nIl vous reste %d erreurs possibles\n", int_nbCoups, 11 - int_nbErreurs);
         printf("Les lettres du mot sont toutes en majuscules.\nEntrez une lettre : \n");
         str_lettre = saisirCaractere();
         printf("caractere saisi : %c\n", str_lettre);
@@ -126,7 +126,13 @@ void jouePendu(char *str_mot)
     free(str_mot);
 
     // On sauvegarde le score
-    ecrireScore(11 - int_nbErreurs);
+
+    /*
+    J'ai codé toutes les fonctions relatives à la sauvegarde du score.
+    Cependant, je n'arrive pas à résoudre un "segmentation fault" apparement dû à mon utilisation de la fonction getline().
+    */
+   
+    //score(11 - int_nbErreurs);
 }
 
 // fonction qui permet de jouer une lettre
@@ -176,23 +182,15 @@ int aTrouve(char *str_mot, char* str_motTemp, int int_nbErreur)
 }
 
 // fonction qui permet de sauvegarder le score
-void ecrireScore(int int_essaisRestants)
+void score(int int_essaisRestants)
 {
-    FILE* pfil_fic;  // Descripteur de fichier
-	int int_retour;  // Valeur de retour des fonctions
-	char* str_pseudo; //Pseudo du joueur
-	size_t uint_nb; // Nombre pour le getline
-	
-	// Ouverture du fichier et test de l'ouverture
-	pfil_fic = fopen ("./files/scores.txt", "a+");
-	if (pfil_fic == NULL) {
-		// Si pb alors on affiche un message
-		fprintf (stderr, "Problème d'ouverture du fichier : %s\n", strerror (errno));
-		// et on quitte
-		exit(EXIT_FAILURE);
-	}
+    char ** pstr_lignes; // Tableau de tableau de caractères
+    char* str_pseudo; // Pseudo saisi
+    int int_retour; // Retour de fonction
+    size_t uint_nb; // Taille du fichier
+    int int_nbLignes; // Nombre de lignes du fichier
 
-	// Ecriture d'une cha�ne demandée à l'utilisateur dans le fichier
+    // On demande le pseudo à l'utilisateur
 	// Initialisation
 	str_pseudo = NULL;
 	// Demande de la chaîne à l'utilisateur
@@ -202,20 +200,88 @@ void ecrireScore(int int_essaisRestants)
 	if (int_retour == -1) {
 		// Si pb de lecture, on affiche un message
 		fprintf (stderr, "Problème de lecture : %s\n", strerror (errno));
-		// et on quitte, mais avant on ferme le fichier
-		int_retour = fclose (pfil_fic);
-		if (int_retour == EOF) {
-			// Si il y a un pb de fermeture alors on affiche un message 
-			fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
-		}
 		exit(EXIT_FAILURE);		
 	}
 
-    // On regarde si l'utilisateur n'avait pas déjà un score, si c'est le cas on prend le max
-    if(int_essaisRestants > recherchePseudo(str_pseudo, int_essaisRestants)){
-        // écriture de la chaîne dans le fichier
-        int_retour = fprintf (pfil_fic, "%s%d\n", str_pseudo, int_essaisRestants);   
+    // On récupère les scores
+    pstr_lignes = lireScores();
+
+    // On modifiert le score
+    int_nbLignes = modifierScore(str_pseudo, int_essaisRestants, pstr_lignes);
+
+    // On écrit les nouveaux scores dans le fichier
+    ecrireScores(pstr_lignes, int_nbLignes);
+}
+
+// fonction qui permet de rechercher lire et stocker les scores
+char ** lireScores(void){
+    FILE* pfil_fic;  // Descripteur de fichier
+	int int_retour;  // Valeur de retour des fonctions
+	char* str_ligne; // Chaîne de caractères pour la lecture
+	size_t uint_nb; // Nombre pour le getline
+    int int_nbLignes; // Nombre de lignes dans le fichier
+    char ** pstr_lignes; // Tableau de chaînes de caractères
+    int int_i; // Iterateur de boucle
+
+	// Ouverture du fichier et test de l'ouverture
+	pfil_fic = fopen ("./files/scores.txt", "r");
+	if (pfil_fic == NULL) {
+		// Si pb alors on affiche un message
+		fprintf (stderr, "Problème d'ouverture du fichier : %s\n", strerror (errno));
+		// et on quitte
+		exit(EXIT_FAILURE);
+	}
+
+    // On lit le fichier ligne par ligne
+    // On récupère d'abord le nombre de mots dans le fichier
+    getline(&str_ligne, &uint_nb, pfil_fic);
+    printf("ok lecture nb lignes\n");
+    int_nbLignes = atoi(str_ligne);
+    
+    // on prévoie deux cases supplémentaire pour éventuellement ajouter le pseudo et son score
+    pstr_lignes = creerTab(int_nbLignes + 2);
+
+    for(int_i = 0; int_i < int_nbLignes; int_i ++){
+        getline(&str_ligne, &uint_nb, pfil_fic);
+        printf("%s\n", str_ligne);
+        pstr_lignes[int_i] = malloc(sizeof(char)*(strlen(str_ligne)+1));
+        strcpy(pstr_lignes[int_i], str_ligne);
     }
+
+    // On remplit les deux dernières cases du tableau
+    pstr_lignes[int_nbLignes] = malloc(sizeof(char)*(strlen("\0")+1));
+    strcpy(pstr_lignes[int_nbLignes], "\0");
+    pstr_lignes[int_nbLignes+1] = malloc(sizeof(char)*(strlen("\0")+1));
+    strcpy(pstr_lignes[int_nbLignes+1], "\0");
+
+	// Dans tous les cas, ici on ferme le fichier
+	int_retour = fclose (pfil_fic);
+	if (int_retour == EOF) {
+		// Si il y a un pb de fermeture alors on affiche un message 
+		fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
+		exit(EXIT_FAILURE);	
+	}
+
+    return(pstr_lignes);
+}
+
+void ecrireScores(char** tab_scores, int int_nbLignes){
+    // Déclaration des variables
+    FILE* pfil_fic;  // Descripteur de fichier
+    int int_retour;  // Valeur de retour des fonctions
+    int int_i; // Iterateur de boucle
+
+    // Ouverture du fichier et test de l'ouverture
+	pfil_fic = fopen ("./files/scores.txt", "w");
+	if (pfil_fic == NULL) {
+		// Si pb alors on affiche un message
+		fprintf (stderr, "Problème d'ouverture du fichier : %s\n", strerror (errno));
+		// et on quitte
+		exit(EXIT_FAILURE);
+	}
+
+	// On écrit le nombre de lignes dans le fichier
+    int_retour = fprintf (pfil_fic, "%d\n", int_nbLignes); 
 
 	if (int_retour < 0) {
 		// Si pb d'ecriture, on affiche un message
@@ -229,45 +295,19 @@ void ecrireScore(int int_essaisRestants)
 		exit(EXIT_FAILURE);		
 	}
 
-	// Dans tous les cas, ici on ferme le fichier
-	int_retour = fclose (pfil_fic);
-	if (int_retour == EOF) {
-		// Si il y a un pb de fermeture alors on affiche un message 
-		fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
-		exit(EXIT_FAILURE);	
-	}
-}
-
-// fonction qui permet chercher le pseudo du joueur
-int recherchePseudo(char *str_pseudo, int int_score)
-{
-    FILE* pfil_fic;  // Descripteur de fichier
-	int int_retour;  // Valeur de retour des fonctions
-	size_t uint_nb; // Nombre pour le getline
-    char *str_ligne; // Ligne lue
-    int int_res; // Score maximum de l'utilisateur
-
-    int_res = 0;
-	
-	// Ouverture du fichier et test de l'ouverture
-	pfil_fic = fopen ("./files/scores.txt", "r");
-	if (pfil_fic == NULL) {
-		// Si pb alors on affiche un message
-		fprintf (stderr, "Problème d'ouverture du fichier : %s\n", strerror (errno));
-		// et on quitte
-		exit (EXIT_FAILURE);
-	}
-
-    // On lit le fichier ligne par ligne
-    while (getline(&str_ligne, &uint_nb, pfil_fic) != EOF) {
-        // On vérifie si le pseudo correspond
-        if(strcmp(str_ligne, str_pseudo) == 0){
-            // Si oui on récupère le score
-            fgets (str_ligne, sizeof (str_ligne), pfil_fic);
-            if(int_res < atoi(str_ligne)){
-                int_res = atoi(str_ligne);
+    // On écrit les scores dans le fichier
+    for(int_i = 0; int_i < int_nbLignes; int_i ++){
+        int_retour = fprintf (pfil_fic, "%s", tab_scores[int_i]);
+        if (int_retour < 0) {
+            // Si pb d'ecriture, on affiche un message
+            fprintf (stderr, "Problème d'écriture : %s\n", strerror (errno));
+            // et on quitte, mais avant on ferme le fichier
+            int_retour = fclose (pfil_fic);
+            if (int_retour == EOF) {
+                // Si il y a un pb de fermeture alors on affiche un message 
+                fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
             }
-            int_res = atoi(str_ligne + strlen(str_pseudo) + 1);
+            exit(EXIT_FAILURE);		
         }
     }
 
@@ -276,10 +316,86 @@ int recherchePseudo(char *str_pseudo, int int_score)
 	if (int_retour == EOF) {
 		// Si il y a un pb de fermeture alors on affiche un message 
 		fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
-		exit (EXIT_FAILURE);
+		exit(EXIT_FAILURE);	
 	}
 
-    return(int_res);
+    freeTab2D(tab_scores, int_nbLignes);
+}
+
+// fonction qui lit le nombre de lignes dans le fichier scores.txt
+int nbLignesScores(void)
+{
+    FILE* pfil_fic;  // Descripteur de fichier
+	int int_retour;  // Valeur de retour des fonctions
+	char* str_ligne; // Chaîne de caractères pour la lecture
+	size_t uint_nb; // Nombre pour le getline
+    int int_nbLignes; // Nombre de lignes dans le fichier
+	
+	// Ouverture du fichier et test de l'ouverture
+	pfil_fic = fopen ("./files/scores.txt", "r");
+	if (pfil_fic == NULL) {
+		// Si pb alors on affiche un message
+		fprintf (stderr, "Problème d'ouverture du fichier : %s\n", strerror (errno));
+		// et on quitte
+		exit(EXIT_FAILURE);
+	}
+
+    // On lit le fichier ligne par ligne
+    // On récupère d'abord le nombre de mots dans le fichier
+    getline(&str_ligne, &uint_nb, pfil_fic);
+    int_nbLignes = atoi(str_ligne);
+
+	// Dans tous les cas, ici on ferme le fichier
+	int_retour = fclose (pfil_fic);
+	if (int_retour == EOF) {
+		// Si il y a un pb de fermeture alors on affiche un message 
+		fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
+		exit(EXIT_FAILURE);	
+	}
+
+    return(int_nbLignes);
+}
+
+// fonction qui permet chercher le pseudo du joueur
+int modifierScore(char *str_pseudo, int int_score, char** tab_score)
+{
+    // Déclaration des variables
+    int int_i; // Iterateur de boucle
+    int int_aRemplacer; // booléen qui permet de savoir si on doit remplacer le score ou non
+    int int_nbLignes; // Nombre de lignes dans le fichier
+    char* str_score; // Chaîne de caractères pour le score
+
+    // Initialisation des variables
+    int_aRemplacer = 0;
+
+    // On récupère le nombre de lignes dans le fichier
+    int_nbLignes = nbLignesScores();
+
+    // On convertit le score en chaîne de caractères
+    str_score = malloc(sizeof(char) * 10);
+    sprintf(str_score, "%d", int_score);
+
+    // On parcours le tableau de scores
+    for(int_i = 0; int_i < int_nbLignes; int_i ++){
+        // Si le pseudo correspond à celui du joueur et que le score est supérieur au score du joueur
+        if(strcmp(str_pseudo, tab_score[int_i]) == 0){
+            if(int_score > atoi(tab_score[int_i + 1])){
+                // On remplace le score
+                tab_score[int_i + 1] = str_score;
+            }
+            // On indique qu'on a trouvé le score
+            int_aRemplacer = 1;
+        }
+    }
+
+    if(!int_aRemplacer){
+        // Si on n'a pas trouvé le score, on ajoute le score à la fin du tableau
+        tab_score[int_nbLignes] = str_pseudo;
+        tab_score[int_nbLignes + 1] = str_score;
+        int_nbLignes += 2;
+    }
+
+    return(int_nbLignes);
 }
 
 // Fonction qui permet d'afficher le nombre d'erreurs graphiquement
@@ -325,3 +441,4 @@ void affichagePendu(int int_nbErreurs)
         break;
     }
 }
+
