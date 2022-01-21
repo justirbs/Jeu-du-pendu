@@ -130,9 +130,11 @@ void jouePendu(char *str_mot)
     /*
     J'ai codé toutes les fonctions relatives à la sauvegarde du score.
     Cependant, je n'arrive pas à résoudre un "segmentation fault" apparement dû à mon utilisation de la fonction getline().
-    */
-   
+    */ 
     //score(11 - int_nbErreurs);
+
+    /* A la place j'ai codé un fonction qui me permet d'écrire le score dans un fichier sans le comparer au meilleur score */
+    score2(11 - int_nbErreurs);
 }
 
 // fonction qui permet de jouer une lettre
@@ -440,5 +442,60 @@ void affichagePendu(int int_nbErreurs)
         printf("\n\n\n\n\n\n\n\n\n\n");
         break;
     }
+}
+
+// Fonction qui sauvegarde le score dans le fichier
+void score2(int int_score){
+    // Déclaration des variables
+    FILE* pfil_fic;  // Descripteur de fichier
+    char* str_pseudo; // Pseudo saisi
+    int int_retour; // Retour de fonction
+    size_t uint_nb; // Taille du fichier
+
+    // Ouverture du fichier et test de l'ouverture
+	pfil_fic = fopen ("./files/scores.txt", "a+");
+	if (pfil_fic == NULL) {
+		// Si pb alors on affiche un message
+		fprintf (stderr, "Problème d'ouverture du fichier : %s\n", strerror (errno));
+		// et on quitte
+		exit(EXIT_FAILURE);
+	}
+
+    // On demande le pseudo à l'utilisateur
+	// Initialisation
+	str_pseudo = NULL;
+	// Demande de la chaîne à l'utilisateur
+	printf ("Quel est votre pseudo ?\n");
+	int_retour = getline (&str_pseudo, &uint_nb, stdin);
+	// Vérification de l'entrée
+	if (int_retour == -1) {
+		// Si pb de lecture, on affiche un message
+		fprintf (stderr, "Problème de lecture : %s\n", strerror (errno));
+		exit(EXIT_FAILURE);		
+	}
+
+    int_retour = fprintf (pfil_fic, "%s%d", str_pseudo, int_score);
+
+    if (int_retour < 0) {
+        // Si pb d'ecriture, on affiche un message
+        fprintf (stderr, "Problème d'écriture : %s\n", strerror (errno));
+        // et on quitte, mais avant on ferme le fichier
+        int_retour = fclose (pfil_fic);
+        if (int_retour == EOF) {
+            // Si il y a un pb de fermeture alors on affiche un message 
+            fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
+        }
+        exit(EXIT_FAILURE);		
+    }
+
+	// Dans tous les cas, ici on ferme le fichier
+	int_retour = fclose (pfil_fic);
+	if (int_retour == EOF) {
+		// Si il y a un pb de fermeture alors on affiche un message 
+		fprintf (stderr, "Problème de fermeture du fichier : %s\n", strerror (errno));
+		exit(EXIT_FAILURE);	
+	}
+
+    free(str_pseudo);
 }
 

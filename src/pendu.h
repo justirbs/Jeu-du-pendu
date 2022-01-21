@@ -155,4 +155,16 @@ int nbLignesScores(void);
 */
 void affichagePendu(int int_nbErreurs);
 
+/**
+* \fn void score2(int int_score)
+* \brief permet de sauvegarder le score de l'utilisateur, sans le comparer à son meilleur score
+*
+* \param int_score le score de l'utilisateur
+*
+* \author Justine Ribas <ribasjusti@cy-tech.fr>
+* \version 0.1
+* \date 21 janvier 2022
+*/
+void score2(int int_score);
+
 #endif
